@@ -250,7 +250,7 @@ course_name_translation_table = {
 core_math = [ # archaic course names
               "F200", "F201", "F202", "F107", "F103", "F161", "F262", "F272", "F194",
               # modern course names....
-              "F113", "F151", "F152", "F122", "F222", "F232", "F156", "F251", "F252", "F253" ]
+              "F113", "F114", "F151", "F152", "F122", "F222", "F230", "F232", "F156", "F251", "F252", "F253" ]
 core_stat = [ "F200" ]
 
 dawn_of_time = 199801
@@ -305,6 +305,15 @@ class Term:
     @property
     def semester_text(self):
         return semester_text_value[self.semester]
+
+    @property
+    def season(self):
+        return self.semester
+
+    """Returns a name representing the semester (Spring/Summer/Fall)"""
+    @property
+    def season_text(self):
+        return self.semester_text
 
     def __str__(self):
         return "%s %d" % (self.semester_text,self.year)
@@ -389,6 +398,22 @@ class TermRange:
             if self._end < term:
                 return False
         return True
+
+    def __iter__(self):
+        current = self._start
+        if current is None:
+            current = Term(dawn_of_time)
+
+        if self._end is None:
+            while True:
+                yield current
+                current = current + 1
+        else:
+            while current <= self._end:
+                yield current
+                current = current + 1
+
+
 
     """Returns an SQL clause sutable for matching the
     given term_field_name with the terms in this range"""
