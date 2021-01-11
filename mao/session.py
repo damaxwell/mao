@@ -30,7 +30,7 @@ class Session:
             argv = sys.argv
         self._argv = argv
 
-        # self._db = mao.open_database()
+        self._db = mao.open_database()
         self._queries = []
 
         if recording_file is None:
@@ -41,10 +41,12 @@ class Session:
 
         self._recording_file = recording_file
 
+
     def query(self, qstring, description=None):
         if description is None:
             description = "NO DESCRIPTION"
         self._queries.append({'description':description, 'sql':clean_str(qstring)})
+        return mao.query(self._db, qstring)
 
     def __enter__(self):
         return self
