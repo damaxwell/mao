@@ -37,7 +37,15 @@ class Session:
             now = datetime.datetime.now() # current date and time
             time = now.strftime("%Y-%m-%d:%H:%M:%S")
             file_base = os.path.basename(sys.argv[0])
-            recording_file = file_base+"_"+time+".yml"
+
+            target_dir = "mao_queries"
+            if not os.path.isdir(target_dir):
+                if os.path.exists(target_dir):
+                    raise "Unable to save mao queries into directory %s; is an existing file" % target_dir
+                os.mkdir(target_dir)
+
+            recording_file = os.path.join(target_dir,file_base+"_"+time+".yml")
+
 
         self._recording_file = recording_file
 
