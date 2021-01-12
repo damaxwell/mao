@@ -112,10 +112,16 @@ class Course:
                 course = str(course)
                 course_regex = "([a-z|A-Z]+)[ ,_]+?([A-Z]?[0-9]+[a-z|A-Z]*)"
                 match = re.match(course_regex, course)
-                if match is None:
-                    raise ValueError( "Cannot construct a course from '%s'" % course )
-                self._subject = match.groups()[0]
-                self._number = match.groups()[1]
+                if match is not None:                    
+                    self._subject = match.groups()[0]
+                    self._number = match.groups()[1]
+                else:
+                    course_regex = "([A-Z]?[0-9]+[a-z|A-Z]*)"
+                    match = re.match(course_regex, course)
+                    if match is not None:                    
+                        self._number = match.groups()[0]
+                    else:
+                        raise ValueError( "Cannot construct a course from '%s'" % course )
 
         # If we haven't yet determined a subject, it's MATH or DEVM.
         # Decide which based on the number.
