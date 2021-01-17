@@ -52,7 +52,8 @@ def course_attempts_sql(courses, terms):
 	ssbsect_subj_code as subject, 
 	ssbsect_crse_numb as course_number,
 	ssbsect_seq_numb as section,
-	ssbsect_crn as crn, 
+	ssbsect_crn as crn,
+	ssbsect_camp_code as camp_code, 
 	sirasgn_pidm as instructor
 	FROM sirasgn, spriden, ssbsect, sfrstcr
 	WHERE
@@ -452,6 +453,29 @@ def join_majors(query, query_pidm, query_term_code):
 		ON B.PIDM = C.PIDM ) D
 		JOIN SGBSTDN on 
 	D.PIDM = SGBSTDN_PIDM AND MAJOR_TERM_CODE_EFF = SGBSTDN_TERM_CODE_EFF
+	ORDER BY LAST_NAME
+	""" % (query, query_pidm, query_term_code, query)
+	return q
+
+""" 
+Given an SQL query that contains a PIDM column (`query_pidm`)
+and a term code column (`query_term_code`) returns an SQL
+query that generates the same table but adds on columns
+for major 1 and major 2 for the student in effect at the
+time of the original table's term code.
+"""
+def join_student_campus_code(query, query_pidm, query_term_code):
+	q = """
+	SELECT D.*, SGBSTDN_CAMP_CODE AS STUDENT_CAMP_CODE FROM
+		(SELECT C.*, TERM_CODE_EFF FROM
+			(SELECT MQ1.PIDM,  MAX(SGBSTDN_TERM_CODE_EFF) AS TERM_CODE_EFF FROM ( %s ) MQ1
+			JOIN SGBSTDN
+			ON MQ1.%s = SGBSTDN.SGBSTDN_PIDM AND MQ1.%s >= SGBSTDN_TERM_CODE_EFF
+			GROUP BY MQ1.PIDM ) B
+		JOIN ( %s ) C
+		ON B.PIDM = C.PIDM ) D
+		JOIN SGBSTDN on 
+	D.PIDM = SGBSTDN_PIDM AND TERM_CODE_EFF = SGBSTDN_TERM_CODE_EFF
 	ORDER BY LAST_NAME
 	""" % (query, query_pidm, query_term_code, query)
 	return q
