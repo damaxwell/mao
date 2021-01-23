@@ -307,6 +307,12 @@ class Term:
     def semester(self):
         return self._term % 100
 
+    @property
+    def academic_year(self):
+        if self.semester != 3:
+            return self.year - 1
+        return self.year
+
     """Returns a name representing the semester (Spring/Summer/Fall)"""
     @property
     def semester_text(self):
