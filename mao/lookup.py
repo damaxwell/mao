@@ -31,10 +31,6 @@ def combine_restrictions(a,b):
 		selector += " and "
 	return selector
 
-def course_attempts(db, courses, terms):
-	q = course_attempts_sql(courses, terms)
-	return mao.query(db,q)
-
 def course_attempts_sql(courses, terms):
 
 	courses = course_selector_sql("ssbsect_subj_code","ssbsect_crse_numb",courses)
@@ -55,7 +51,7 @@ def course_attempts_sql(courses, terms):
 	ssbsect_crn as crn,
 	ssbsect_camp_code as camp_code, 
 	sirasgn_pidm as instructor
-	FROM sirasgn, spriden, ssbsect, sfrstcr
+	FROM sirasgn, spriden, ssbsect, sfrstcr, STVRSTS
 	WHERE
 	%s
 
@@ -66,7 +62,10 @@ def course_attempts_sql(courses, terms):
 	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
 	-- -- (keep enrolled or withdrawn students instead)
 
-	and sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
+	-- and sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
+
+	AND sfrstcr_rsts_code = STVRSTS.STVRSTS_CODE
+	AND (STVRSTS.STVRSTS_INCL_SECT_ENRL = 'Y')
 
 	--- tack on the student identification
 	and spriden_pidm = sfrstcr_pidm
@@ -101,7 +100,7 @@ def course_attempts_and_grades_sql(courses, terms):
 	ssbsect_seq_numb as section,
 	ssbsect_crn as crn, 
 	sirasgn_pidm as instructor
-	FROM sirasgn, spriden, ssbsect, sfrstcr
+	FROM sirasgn, spriden, ssbsect, sfrstcr, STVRSTS
 	WHERE
 	%s
 
@@ -112,7 +111,8 @@ def course_attempts_and_grades_sql(courses, terms):
 	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
 	-- -- (keep enrolled or withdrawn students instead)
 
-	and sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
+	AND sfrstcr_rsts_code = STVRSTS.STVRSTS_CODE
+	AND (STVRSTS.STVRSTS_INCL_SECT_ENRL = 'Y')
 
 	--- tack on the student identification
 	and spriden_pidm = sfrstcr_pidm
@@ -153,133 +153,6 @@ def course_attempts_and_grades_sql(courses, terms):
 
 	return q
 
-def basic_course_attempts_sql(courses,terms):
-
-	courses = course_selector_sql("ssbsect_subj_code","ssbsect_crse_numb",courses)
-	terms = terms.sql_selector("ssbsect_term_code")
-	course_term_selector = combine_restrictions(courses,terms)
-
-	q = """
-	SELECT
-	sfrstcr_pidm as pidm, 
-	spriden_id as id,
-	ssbsect_term_code as term_code,
-	ssbsect_subj_code as subject, 
-	ssbsect_crse_numb as course_number,
-	ssbsect_seq_numb as section
-	FROM spriden, ssbsect, sfrstcr
-	WHERE
-	-- Restrict courses and terms
-	%s
-
-
-
-	-- match term_code/crn for list of sections vs student credits
-	ssbsect_term_code=sfrstcr_term_code
-	and ssbsect_crn=sfrstcr_crn
-
-	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
-	-- -- (keep enrolled or withdrawn students instead)
-	--- sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
-
-
-	--- tack on the student identification
-	and spriden_pidm = sfrstcr_pidm
-	and spriden_change_ind is Null
-
-	""" % course_term_selector
-	return q
-
-def withdrawals_sql(courses,terms):
-
-	courses = course_selector_sql("ssbsect_subj_code","ssbsect_crse_numb",courses)
-	terms = terms.sql_selector("ssbsect_term_code")
-	course_term_selector = combine_restrictions(courses,terms)
-
-	q = """
-	SELECT
-	sfrstcr_pidm as pidm, 
-	spriden_id as id,
-	ssbsect_term_code as term_code,
-	ssbsect_subj_code as subject, 
-	ssbsect_crse_numb as course_number,
-	ssbsect_seq_numb as section
-	FROM spriden, ssbsect, sfrstcr
-	WHERE
-	-- Restrict courses and terms
-	%s
-
-
-
-	-- match term_code/crn for list of sections vs student credits
-	ssbsect_term_code=sfrstcr_term_code
-	and ssbsect_crn=sfrstcr_crn
-
-	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
-	-- -- (keep enrolled or withdrawn students instead)
-	and sfrstcr_rsts_code like 'W%%'
-
-
-	--- tack on the student identification
-	and spriden_pidm = sfrstcr_pidm
-	and spriden_change_ind is Null
-
-	""" % course_term_selector
-	return q
-
-def basic_course_attempts_and_grades_sql(courses,terms):
-
-	courses = course_selector_sql("ssbsect_subj_code","ssbsect_crse_numb",courses)
-	terms = terms.sql_selector("ssbsect_term_code")
-	course_term_selector = combine_restrictions(courses,terms)
-
-	q = """
-	SELECT
-	sfrstcr_pidm as pidm, 
-	spriden_id as id,
-	ssbsect_term_code as term_code,
-	ssbsect_subj_code as subject, 
-	ssbsect_crse_numb as course_number,
-	ssbsect_seq_numb as section,
-	shrtckg_grde_code_final as final_grade
-	FROM shrtckg, shrtckn, spriden, ssbsect, sfrstcr
-	WHERE
-	-- Restrict courses and terms
-	%s
-
-
-
-	-- match term_code/crn for list of sections vs student credits
-	ssbsect_term_code=sfrstcr_term_code
-	and ssbsect_crn=sfrstcr_crn
-
-	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
-	-- -- (keep enrolled or withdrawn students instead)
-	--- sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')	
-
-	--- tack on the student identification
-	and spriden_pidm = sfrstcr_pidm
-	and spriden_change_ind is Null
-
-	-- tack on grade information:
-	-- match the pidm/term_code/crn in sfrstcr to shrtckn
-	and shrtckn_pidm=sfrstcr_pidm
-	and shrtckn_term_code=sfrstcr_term_code
-	and shrtckn_crn=sfrstcr_crn
-	-- -- match the pidm/term_code/sequence number in shrtckg to shrtckn
-	and shrtckg_pidm=shrtckn_pidm
-	and shrtckg_tckn_seq_no=shrtckn_seq_no
-	and shrtckg_term_code=shrtckn_term_code
-	-- make sure we get the latest grade
-	and shrtckg_activity_date = (SELECT
-						  max(shrtckg_activity_date)
-	                      from shrtckg
-	                      where (shrtckg_pidm=shrtckn_pidm
-							and shrtckg_tckn_seq_no=shrtckn_seq_no
-							and shrtckg_term_code=shrtckn_term_code))
-
-	""" % course_term_selector
-	return q
 
 
 # Same as course_attempts, but we are able to
@@ -296,7 +169,7 @@ def single_course_first_attempts_sql(course, terms):
 		course = Course(course)
 	courses = course_selector_sql("ssbsect_subj_code", "ssbsect_crse_numb",course)
 
-	all_attempts_sql = basic_course_attempts_sql(course,terms)
+	all_attempts_sql = course_attempts_sql(course,terms)
 
 	q="""SELECT C.*, first_attempt.first_term_code FROM
 	( %s ) C
@@ -329,8 +202,8 @@ def attempts_with_prereq_course(db,course_name, prereq_course_name, terms):
 
 def attempts_with_prereq_course_sql(course_name, prereq_course_name, terms):
 
-	this_course = basic_course_attempts_sql(course_name,terms)
-	prereq_course = basic_course_attempts_and_grades_sql(prereq_course_name, 
+	this_course = course_attempts_sql(course_name,terms)
+	prereq_course = course_attempts_and_grades_sql(prereq_course_name, 
 		mao.TermRange(start=None,end=None))
 
 	q="""SELECT a.*, b.term_code as prereq_term_code, b.subject as prereq_subject, b.course_number as prereq_course_number, b.final_grade as prereq_score, b.section as prereq_section 
@@ -351,7 +224,7 @@ def attempts_with_prereq_xfer_course(db, course_name, prereq_course_name, terms)
 
 def attempts_with_prereq_xfer_course_sql(course_name, prereq_course_name, terms):
 
-	class_sql = basic_course_attempts_sql(course_name,terms)
+	class_sql = course_attempts_sql(course_name,terms)
 
 	xfer_courses = course_selector_sql("shrtrce_subj_code","shrtrce_crse_numb",prereq_course_name)
 
@@ -406,7 +279,7 @@ def attempts_with_prereq_tests_sql(course_name, prereqs, terms):
     sortest_test_date as test_date,
     SFRRSTS_END_DATE as registration_end_date
 
-	FROM SFRRSTS, sortest, spriden, ssbsect, sfrstcr
+	FROM SFRRSTS, sortest, spriden, ssbsect, sfrstcr, STVRSTS
 	WHERE
 	-- Restrict courses/terms
 	%s
@@ -420,8 +293,12 @@ def attempts_with_prereq_tests_sql(course_name, prereqs, terms):
 
 	-- Identitify the end of web registration for the course.  The
 	-- prereq must have been taken before this date.
-	and SFRRSTS_RSTS_CODE = 'RW'
-	--- and sfrrsts_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
+	-- and SFRRSTS_RSTS_CODE = 'RW'
+	AND sfrstcr_rsts_code = STVRSTS.STVRSTS_CODE
+	AND (STVRSTS.STVRSTS_INCL_SECT_ENRL = 'Y')
+
+
+
 	and sortest_test_date <= SFRRSTS_END_DATE
 
 	--- tack on the student identification
