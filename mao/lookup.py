@@ -59,11 +59,8 @@ def course_attempts_sql(courses, terms):
 	ssbsect_term_code=sfrstcr_term_code
 	and ssbsect_crn=sfrstcr_crn
 
-	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
+	-- -- Ensure that waitlisted and dropped students do not appear.
 	-- -- (keep enrolled or withdrawn students instead)
-
-	-- and sfrstcr_rsts_code in ('AC','AD','AL','AU','FW','RE','RI','RW','WA','WD','WR','WT','WX')
-
 	AND sfrstcr_rsts_code = STVRSTS.STVRSTS_CODE
 	AND (STVRSTS.STVRSTS_INCL_SECT_ENRL = 'Y')
 
@@ -108,9 +105,8 @@ def course_attempts_and_grades_sql(courses, terms):
 	ssbsect_term_code=sfrstcr_term_code
 	and ssbsect_crn=sfrstcr_crn
 
-	-- -- Ensure that waitlisted, dropped or auditing students do not appear.
+	-- -- Ensure that waitlisted and dropped students do not appear.
 	-- -- (keep enrolled or withdrawn students instead)
-
 	AND sfrstcr_rsts_code = STVRSTS.STVRSTS_CODE
 	AND (STVRSTS.STVRSTS_INCL_SECT_ENRL = 'Y')
 

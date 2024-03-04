@@ -1,33 +1,5 @@
 import re, sys
-import cx_Oracle
-import pandas.io.sql as psql
 
-def open_database():
-
-    user_name = None
-
-    if sys.platform == 'darwin':
-        from . import mac_keychain
-        creds = mac_keychain.get_credentials('rptp.alaska.edu')
-        if creds is not None:
-            (user_name, passwd) = creds
-
-
-    if user_name is None:
-        sys.stderr.write("Username: ")
-        sys.stderr.flush()
-        user_name = sys.stdin.readline().strip()
-        if user_name is None:
-            raise EOFError
-        passwd=getpass.getpass()
-
-    tns=cx_Oracle.makedsn('rptp.alaska.edu',1541,service_name='rptp.alaska.edu')
-    db = cx_Oracle.connect(user_name,passwd,tns)
-
-    return db
-
-def query(db, qstring):
-        return psql.read_sql(qstring, db)
 
 
 """

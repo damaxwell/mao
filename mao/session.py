@@ -1,4 +1,7 @@
 import os, sys, mao, datetime, yaml
+import pandas.io.sql as psql
+from sqlalchemy import create_engine
+
 
 def session(argv=None,save_record=True,recording_file=None):
     return Session(argv=None,save_record=True,recording_file=None)
@@ -21,6 +24,35 @@ def clean_str(q):
     for l in q.splitlines():
         lines.append(l.rstrip())
     return "\n".join(lines)
+
+
+def open_database():
+
+    user_name = None
+
+    if sys.platform == 'darwin':
+        from . import mac_keychain
+        creds = mac_keychain.get_credentials('rptp.alaska.edu')
+        if creds is not None:
+            (user_name, passwd) = creds
+
+
+    if user_name is None:
+        sys.stderr.write("Username: ")
+        sys.stderr.flush()
+        user_name = sys.stdin.readline().strip()
+        if user_name is None:
+            raise EOFError
+        import getpass
+        passwd=getpass.getpass()
+
+    host = 'rptp.alaska.edu'
+    port = 1521
+    service_name='rptp.alaska.edu'
+  
+    engine = create_engine(f'oracle+oracledb://{user_name}:{passwd}@{host}:{port}/?service_name={service_name}')
+
+    return engine
 
 
 class Session:
@@ -54,7 +86,7 @@ class Session:
         if description is None:
             description = "NO DESCRIPTION"
         self._queries.append({'description':description, 'sql':clean_str(qstring)})
-        return mao.query(self._db, qstring)
+        return psql.read_sql(qstring, self._db)
 
     def __enter__(self):
         return self
