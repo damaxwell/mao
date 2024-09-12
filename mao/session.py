@@ -86,7 +86,15 @@ class Session:
         if description is None:
             description = "NO DESCRIPTION"
         self._queries.append({'description':description, 'sql':clean_str(qstring)})
-        return psql.read_sql(qstring, self._db)
+        df = psql.read_sql(qstring, self._db)
+
+        # Formerly, cx_Oracle made all column names uppercase.
+        # But sqalchemy does not.  So we emulate that behaviour
+        # here to avoid breaking scripts that rely on this.
+
+        df.columns = df.columns.str.upper()
+
+        return df
 
     def __enter__(self):
         return self
