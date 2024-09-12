@@ -6,7 +6,7 @@ cd ..
 
 cat <<EOF > checkout-mao.sh
 #!/bin/sh
-git clone https://github.com/damaxwell/mao.git mao-src
+git clone git@github.com:damaxwell/mao.git mao-src
 cd mao-src
 git checkout $head_sha
 cd ..

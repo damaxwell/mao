@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-git clone https://github.com/damaxwell/mao.git mao-src
+git clone git@github.com:damaxwell/mao.git mao-src
 ln -s mao-src/mao mao
 
 cd mao-src
@@ -9,7 +9,7 @@ cd ..
 
 cat <<EOF > checkout-mao.sh
 #!/bin/sh
-git clone https://github.com/damaxwell/mao.git mao-src
+git clone git@github.com:damaxwell/mao.git mao-src
 cd mao-src
 git checkout $head_sha
 cd ..
