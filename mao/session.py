@@ -82,7 +82,7 @@ class Session:
         self._recording_file = recording_file
 
 
-    def query(self, qstring, description=None):
+    def query(self, qstring, description=None, force_uppercase=False):
         if description is None:
             description = "NO DESCRIPTION"
         self._queries.append({'description':description, 'sql':clean_str(qstring)})
@@ -91,8 +91,8 @@ class Session:
         # Formerly, cx_Oracle made all column names uppercase.
         # But sqalchemy does not.  So we emulate that behaviour
         # here to avoid breaking scripts that rely on this.
-
-        df.columns = df.columns.str.upper()
+        if force_uppercase:
+            df.columns = df.columns.str.upper()
 
         return df
 
